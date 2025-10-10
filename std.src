@@ -1,0 +1,179 @@
+bind 1 +comment:// ... $ {
+	
+}
+
+bind 1 hoist_anchor {
+	[ mov
+	| movh
+	| movl
+	| add
+	| sub
+	| mul
+	| div
+	| mod
+	| and
+	| or
+	| xor
+	| not
+	| com
+	| int
+	| jmp
+	| cmp
+	| jle
+	| jge
+	| jlt
+	| jgt
+	| jeq
+	| jne
+	| shl
+	| shr
+	| bind
+	| explicit_hoist_anchor
+	]
+}
+
+bind 1 label +name {
+	bind 0 name = ip
+}
+
+bind 1 let +name +binding:\= ... in +body:\{ ... \} {
+	comptime {
+		body
+	}
+	bind 0 name = binding
+}
+
+bind 1 comptime +body:\{ ... \} {
+	comp
+		explicit_hoist_anchor
+		body
+		mov r0 !1
+		int
+	run
+	explicit_hoist_anchor
+}
+
+comptime{
+	let tmp = r1 in {
+		mov r1 !mtp
+		sub r1 r1 !8
+	}
+	let sp = r1 in { sub r1 r1 !8 }
+	let fp = r1 in { sub r1 r1 !8 }
+	mov sp !mtp
+	sub sp sp !10
+	mov fp sp
+}
+
+bind 0 tmp = !tmp
+
+bind 0 sp = !sp
+bind 0 fp = !fp
+mov sp !mtp
+sub sp sp !10
+mov fp sp
+
+bind 1 psh ! +x {
+	sub sp sp !8
+	mov [sp] !x
+}
+
+bind 1 psh +x {
+	sub sp sp !8
+	mov [sp] x
+}
+
+bind 1 pop +r {
+	mov r [sp]
+	add sp sp !8
+}
+
+bind 1 term +name +body:\= ... end {
+	bind 0 name = ip
+	explicit_hoist_anchor
+	frame {
+		explicit_hoist_anchor
+		body
+	}
+	mov sp fp
+	pop fp
+	mov tmp sp
+	add sp sp !8
+	mov ip [tmp]
+}
+
+bind 1 @tag frame +body:\{ ... \} {
+	let tag#offset = sp in {
+		psh !0
+	}
+	bind 1 var +name +val:\= ... \; {
+		let tag#name = r1 in {
+			add tag#offset tag#offset !8
+			mov r1 tag#offset
+		}
+		psh !val
+	}
+	bind 1 \$ +name {
+		sub tmp fp !tag#name
+		;;; +anchor:hoist_anchor
+		[tmp]
+	}
+	bind 1 \& +name {
+		sub tmp fp !tag#name
+		;;; +anchor:hoist_anchor
+		tmp
+	}
+	bind 1 str +string: " ,,, " {
+		string{c
+			psh c
+		}
+		mov tmp sp
+		;;; +anchor:hoist_anchor
+		tmp
+	}
+	;;; +anchor:hoist_anchor
+	body
+}
+
+bind 1 +val:stderr ... \; {
+	psh r0
+	psh r1
+	mov r0 !2
+	mov r1 val
+	int
+	pop r1
+	pop r0
+}
+
+bind 1 @tag \( +name \) {
+	psh tag#end
+	psh fp
+	mov fp sp
+	jmp name
+	bind 0 tag#end = ip
+}
+
+bind 1 explicit_hoist_anchor {
+}
+
+//test
+
+(main)
+(exit)
+
+term main =
+	var x = 41 ;
+	var y = 42 ;
+	stderr $x ;
+	stderr $y ;
+	var greeting = str "hello" ;
+	mov r3 $greeting
+	mov r3 [r3]
+	stderr [r3] ;
+end
+
+term exit =
+	mov r0 !1
+	int
+end
+
