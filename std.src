@@ -60,9 +60,13 @@ comptime{
 	}
 	let sp = r1 in { sub r1 r1 !8 }
 	let fp = r1 in { sub r1 r1 !8 }
+	let fsp = r1 in { sub r1 r1 !8 }
+	let fop = r1 in { sub r1 r1 !8 }
 	mov sp !mtp
-	sub sp sp !10
+	mov fsp !mtp
+	sub sp sp !20
 	mov fp sp
+	sub fsp fsp !2000
 }
 
 bind 0 tmp = !tmp
@@ -88,30 +92,54 @@ bind 1 pop +r {
 	add sp sp !8
 }
 
-bind 1 term +name +body:\= ... end {
+bind 1 fpsh {
+	comptime{
+		sub fsp fsp !8
+		mov [fsp] fop
+		mov fop !0
+	}
+}
+
+bind 1 fpop {
+	comptime {
+		mov fop [fsp]
+		add fsp fsp !8
+	}
+}
+
+bind 1 pshfa +x {
+	psh x
+	comptime {
+		add fop fop !8
+	}
+}
+
+bind 1 pshfa ! +x {
+	psh !x
+	comptime {
+		add fop fop !8
+	}
+}
+
+bind 1 popfa +r {
+	pop r
+	comptime {
+		sub fop fop !8
+	}
+}
+
+bind 1 term +name \= {
 	bind 0 name = ip
 	explicit_hoist_anchor
 	frame {
 		explicit_hoist_anchor
-		body
 	}
-	mov sp fp
-	pop fp
-	mov tmp sp
-	add sp sp !8
-	mov ip [tmp]
 }
 
 bind 1 @tag frame +body:\{ ... \} {
-	let tag#offset = sp in {
-		psh !0
-	}
 	bind 1 var +name +val:\= ... \; {
-		let tag#name = r1 in {
-			add tag#offset tag#offset !8
-			mov r1 tag#offset
-		}
-		psh !val
+		val
+		bind 0 tag#name = fop
 	}
 	bind 1 \$ +name {
 		sub tmp fp !tag#name
@@ -123,13 +151,23 @@ bind 1 @tag frame +body:\{ ... \} {
 		;;; +anchor:hoist_anchor
 		tmp
 	}
+	bind 1 word +w {
+		pshfa !w
+	}
 	bind 1 str +string: " ,,, " {
 		string{c
-			psh c
+			pshfa !0
 		}
-		mov tmp sp
-		;;; +anchor:hoist_anchor
-		tmp
+		mov r0 sp
+		mov r1 !0
+		string{c
+			mov [r0] c
+			add r0 r0 !8
+			add r1 r1 !1
+		}
+		pshfa r1
+		mov r1 sp
+		pshfa r1
 	}
 	;;; +anchor:hoist_anchor
 	body
@@ -149,8 +187,18 @@ bind 1 @tag \( +name \) {
 	psh tag#end
 	psh fp
 	mov fp sp
+	fpsh
 	jmp name
 	bind 0 tag#end = ip
+	fpop
+}
+
+bind 1 ret {
+	mov sp fp
+	pop fp
+	mov tmp sp
+	add sp sp !8
+	mov ip [tmp]
 }
 
 bind 1 explicit_hoist_anchor {
@@ -162,18 +210,27 @@ bind 1 explicit_hoist_anchor {
 (exit)
 
 term main =
-	var x = 41 ;
-	var y = 42 ;
-	stderr $x ;
-	stderr $y ;
-	var greeting = str "hello" ;
+	var x = word 41;
+	var y = word 42;
+	// stderr $x;
+	// stderr $y;
+	var greeting = str "hello world" ;
 	mov r3 $greeting
-	mov r3 [r3]
-	stderr [r3] ;
-end
+	mov r0 !0
+	mov r1 [r3]
+	label loop
+		cmp r0 r1
+		add r0 r0 !1
+		jge exit
+		add r3 r3 !8
+		mov r2 [r3]
+		stderr r2;
+		jmp loop
+	label exit
+	ret
 
 term exit =
 	mov r0 !1
 	int
-end
+
 
