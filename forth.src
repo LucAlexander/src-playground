@@ -95,13 +95,25 @@ bind 1 stderr {
 	,r1
 }
 
-bind 1 \: +word +body:% ... \; {
+bind 1 $ \: +word +body:% ... \; {
 	bind 1 word {
 		body
 	}
 }
 
-// primitives
+bind 1 +bytes:\" ,,, \" {
+	bytes{c
+		sub sp sp !8
+	}
+	mov r0 sp
+	mov r1 !0
+	bytes{c
+		mov [r0] c
+		add r0 r0 !8
+		add r1 r1 !1
+	}
+	,r1
+}
 
 bind 1 \+ {
 	pop r0
@@ -149,11 +161,46 @@ bind 1 swp {
 	,r0 ,r1
 }
 
+bind 1 top {
+	[sp]
+}
+
+bind 1 pop_ {
+	add sp sp !8
+}
+
+bind 1 zero {
+	ovr
+	pop r3
+	cmp r3 !0
+	pop r1
+	jeq r1
+}
+
+bind 1 jump {
+	pop r0
+	jmp r0
+}
+
 // test
 
 :square dup * ;
 
 :cube dup dup * * ;
 
-2 integer square cube stderr end
+:print
+	label loop
+		,return zero
+			swp stderr pop_
+			1 integer -
+		,loop jump
+	label return;
+
+:stack_buffer 0 integer dup dup dup dup dup dup dup;
+
+:main "hello world" print end;
+
+stack_buffer main
+
+
 
