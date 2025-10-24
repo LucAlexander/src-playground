@@ -1,236 +1,175 @@
-bind 1 +comment:// ... $ {
-	
-}
+pass
+mov 0 r1
+bind continue ip
+	mov r2 r0
+	movw r3 !/
+	cmp [r0] r3
+	jne !append
+	add r0 r0 !8
+	cmp [r0] r3
+	jne !append
+	bind inner ip
+		add r0 r0 !8
+		movw r3 !\
+		cmp [r0] r3
+		jne !inner 
+		add r0 r0 !8
+		jmp !continue 
+	bind append ip
+	mov r0 r2
+	mov [r1] [r0]
+	add r1 r1 !8
+	add r0 r0 !8
+	cmp r0 0
+	jlt !continue
+bind break ip
+mov r0 !1
+int	
+end
 
-bind 1 hoist_anchor {
-	[ mov
-	| movh
-	| movl
-	| add
-	| sub
-	| mul
-	| div
-	| mod
-	| and
-	| or
-	| xor
-	| not
-	| com
-	| int
-	| jmp
-	| cmp
-	| jle
-	| jge
-	| jlt
-	| jgt
-	| jeq
-	| jne
-	| shl
-	| shr
-	| bind
-	| explicit_hoist_anchor
-	]
-}
+// the above pass defines line comments
 
-bind 1 label +name {
-	bind 0 name = ip
-}
+// byte literal blocks for passes
+pass
+movw 0 !pass_literal_bytes
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	bind change ip
+		cmp [r0] 0
+		jeq !break
+		movw [r1] !mov add r1 r1 !8
+		movw [r1] !\[  add r1 r1 !8
+		movw [r1] !r1  add r1 r1 !8
+		movw [r1] !\]  add r1 r1 !8
+		movw [r1] !\[  add r1 r1 !8
+		movw [r1] [r0] add r1 r1 !8
+		movw [r1] !\]  add r1 r1 !8
+		add r0 r0 !8
+		jmp !change
+	bind break ip
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
 
-bind 1 let +name +binding:\= ... in +body:\{ ... \} {
-	comptime {
-		body
-	}
-	bind 0 name = binding
-}
-
-bind 1 comptime +body:\{ ... \} {
+// stack initialization
+pass
+movw 0 !stack_init
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_bytes
 	comp
-		explicit_hoist_anchor
-		body
+		mov r1 !mtp
+		sub 0 r1 !8
+		sub 8 0 !8
 		mov r0 !1
 		int
 	run
-	explicit_hoist_anchor
-}
+	bind sp 0
+	bind fp 8
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
 
-comptime{
-	let tmp = r1 in {
-		mov r1 !mtp
-		sub r1 r1 !8
-	}
-	let sp = r1 in { sub r1 r1 !8 }
-	let fp = r1 in { sub r1 r1 !8 }
-	let fsp = r1 in { sub r1 r1 !8 }
-	let fop = r1 in { sub r1 r1 !8 }
-	mov sp !mtp
-	mov fsp !mtp
-	sub sp sp !20
-	mov fp sp
-	sub fsp fsp !2000
-}
+// multicore register setup
+pass
+movw 0 !core_register_init
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_bytes
+	comp
+		mul r1 !6 !8
+		mul r2 r1 !2
+		mul r3 r1 !3
+		add 0  !r0 r1
+		add 8  !r1 r1
+		add 10 !r2 r1
+		add 18 !r3 r1
+		add 20 !r0 r2
+		add 28 !r1 r2
+		add 30 !r2 r2
+		add 38 !r3 r2
+		add 40 !r0 r3
+		add 48 !r1 r3
+		add 50 !r2 r3
+		add 58 !r3 r3
+		mov r0 !1
+		int
+	run
+	bind r01 0
+	bind r11 8
+	bind r21 10
+	bind r31 18
+	bind r02 20
+	bind r12 28
+	bind r22 30
+	bind r32 38
+	bind r03 40
+	bind r13 48
+	bind r23 50
+	bind r33 58
+	bind save_r0 !r0
+	bind save_r1 !r1
+	bind save_r2 !r2
+	bind save_r3 !r3
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
 
-bind 0 tmp = !tmp
+// standard pass
+// pass
+// mov 8 r1
+// bind loop ip
+	// mov [r1] [r0]
+	// add r0 r0 !8
+	// add r1 r1 !8
+	// cmp r0 8
+	// jne !loop
+// mov r0 !1
+// int
+// end
 
-bind 0 sp = !sp
-bind 0 fp = !fp
-mov sp !mtp
-sub sp sp !10
-mov fp sp
+// test
+stack_init
+core_register_init
 
-bind 1 psh ! +x {
-	sub sp sp !8
-	mov [sp] !x
-}
+bind loop ip
+jmp loop
 
-bind 1 psh +x {
-	sub sp sp !8
-	mov [sp] x
-}
-
-bind 1 pop +r {
-	mov r [sp]
-	add sp sp !8
-}
-
-bind 1 fpsh {
-	comptime{
-		sub fsp fsp !8
-		mov [fsp] fop
-		mov fop !0
-	}
-}
-
-bind 1 fpop {
-	comptime {
-		mov fop [fsp]
-		add fsp fsp !8
-	}
-}
-
-bind 1 pshfa +x {
-	psh x
-	comptime {
-		add fop fop !8
-	}
-}
-
-bind 1 pshfa ! +x {
-	psh !x
-	comptime {
-		add fop fop !8
-	}
-}
-
-bind 1 popfa +r {
-	pop r
-	comptime {
-		sub fop fop !8
-	}
-}
-
-bind 1 term +name \= {
-	bind 0 name = ip
-	explicit_hoist_anchor
-	frame {
-		explicit_hoist_anchor
-	}
-}
-
-bind 1 @tag frame +body:\{ ... \} {
-	bind 1 var +name +val:\= ... \; {
-		val
-		bind 0 tag#name = fop
-	}
-	bind 1 \$ +name {
-		sub tmp fp !tag#name
-		;;; +anchor:hoist_anchor
-		[tmp]
-	}
-	bind 1 \& +name {
-		sub tmp fp !tag#name
-		;;; +anchor:hoist_anchor
-		tmp
-	}
-	bind 1 word +w {
-		pshfa !w
-	}
-	bind 1 str +string: " ,,, " {
-		string{c
-			pshfa !0
-		}
-		mov r0 sp
-		mov r1 !0
-		string{c
-			mov [r0] c
-			add r0 r0 !8
-			add r1 r1 !1
-		}
-		pshfa r1
-		mov r1 sp
-		pshfa r1
-	}
-	;;; +anchor:hoist_anchor
-	body
-}
-
-bind 1 +val:stderr ... \; {
-	psh r0
-	psh r1
-	mov r0 !2
-	mov r1 val
-	int
-	pop r1
-	pop r0
-}
-
-bind 1 @tag \( +name \) {
-	psh tag#end
-	psh fp
-	mov fp sp
-	fpsh
-	jmp name
-	bind 0 tag#end = ip
-	fpop
-}
-
-bind 1 ret {
-	mov sp fp
-	pop fp
-	mov tmp sp
-	add sp sp !8
-	mov ip [tmp]
-}
-
-bind 1 explicit_hoist_anchor {
-}
-
-//test
-
-(main)
-(exit)
-
-term main =
-	var x = word 41;
-	var y = word 42;
-	// stderr $x;
-	// stderr $y;
-	var greeting = str "hello world" ;
-	mov r3 $greeting
-	mov r0 !0
-	mov r1 [r3]
-	label loop
-		cmp r0 r1
-		add r0 r0 !1
-		jge exit
-		add r3 r3 !8
-		mov r2 [r3]
-		stderr r2;
-		jmp loop
-	label exit
-	ret
-
-term exit =
-	mov r0 !1
-	int
-
-
+mov r0 !1
+int 
