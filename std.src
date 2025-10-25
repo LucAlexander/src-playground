@@ -10,7 +10,7 @@ bind continue ip
 	jne !append
 	bind inner ip
 		add r0 r0 !8
-		movw r3 !\
+		movw r3 !
 		cmp [r0] r3
 		jne !inner 
 		add r0 r0 !8
@@ -44,9 +44,8 @@ bind loop ip
 		movw [r1] !\[  add r1 r1 !8
 		movw [r1] !r1  add r1 r1 !8
 		movw [r1] !\]  add r1 r1 !8
-		movw [r1] !\[  add r1 r1 !8
-		movw [r1] [r0] add r1 r1 !8
-		movw [r1] !\]  add r1 r1 !8
+		movw [r1] !\!  add r1 r1 !8
+		mov  [r1] [r0] add r1 r1 !8
 		add r0 r0 !8
 		jmp !change
 	bind break ip
@@ -142,6 +141,81 @@ bind loop ip
 	add r0 r0 !8
 	jmp !loop
 	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
+// whitespace skip for pass
+pass
+movw 0 !pass_whitespace
+mov 8 r1
+movw 10 ! // space
+movw 18 !	// tag
+movw 20 !
+// newline
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_bytes
+	bind pass_loop ip
+		cmp [r0]
+	pass_literal_bytes
+		mov [r1] 10
+		add r1 r1 !8
+	pass_literal_bytes
+		jeq !pass_skip
+		cmp [r0]
+	pass_literal_bytes
+		mov [r1] 18
+		add r1 r1 !8
+	pass_literal_bytes
+		jeq !pass_skip
+		cmp [r0]
+	pass_literal_bytes
+		mov [r1] 20
+		add r1 r1 !8
+	pass_literal_bytes
+		jeq !pass_skip
+		jmp !pass_end
+		bind pass_skip ip
+		add r0 r0 !8
+		jmp !pass_loop
+	bind pass_end ip
+	unbind pass_loop
+	unbind pass_skip
+	unbind pass_end
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop	
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
+// stack push operation
+pass
+movw 0 !psh
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	pass_literal_bytes
+	sub sp sp !8
+	mov [sp]
+	pass_literal_bytes
+	bind next ip	
 	mov [r1] [r0]
 	add r0 r0 !8
 	add r1 r1 !8
