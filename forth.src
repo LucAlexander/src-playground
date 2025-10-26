@@ -442,6 +442,56 @@ mov r0 !1
 int
 end
 
+// add 
+pass
+movw 0 !+
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_content
+pop r0
+pop r1
+add r0 r0 r1
+psh r0
+	pass_literal_content
+	add r0 r0 !8
+	jmp !loop 
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
+// mul
+pass
+movw 0 !*
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_content
+pop r0
+pop r1
+mul r0 r0 r1
+psh r0
+	pass_literal_content
+	add r0 r0 !8
+	jmp !loop 
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
 // word definitions
 pass
 movw 0 !:
@@ -526,17 +576,25 @@ stack_init
 core_register_init
 
 mov r0 !4
-psh r0
-pop r1
 dup
+dup
+dup
+pop r1
 swp
 rot
 nip
 
 :birot rot rot;
 
-psh !2 psh !3 psh !5 birot
+:double psh !2 *;
+
+:fib_step dup rot +;
+
+psh !2 psh !3 psh !5 birot double
 pop r3
+
+psh !1
+psh !1
 
 bind loop ip
 jmp loop
