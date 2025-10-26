@@ -209,31 +209,33 @@ movw r2 !\!
 cmp [r0] r2
 jeq !parse_imm
 movw r2 !\[
-cmp [0] r2
+cmp [r0] r2
 jeq !parse_deref
-bind parse_imm ip
+jmp !parse_imm
+bind parse_deref ip
 	movw r2 !\]
-	cmp [0] r2
+	cmp [r0] r2
+	jeq !parse_end
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	jmp parse_deref
+unbind parse_deref
+bind parse_imm ip
+	movw r2 ! 
+	cmp [r0] r2
+	jeq !parse_end
+	movw r2 !	
+	cmp [r0] r2
+	jeq !parse_end
+	movw r2 !
+	cmp [r0] r2
 	jeq !parse_end
 	mov [r1] [r0]
 	add r0 r0 !8
 	add r1 r1 !8
 	jmp parse_imm
 unbind parse_imm
-bind parse_deref ip
-	movw r2 ! 
-	cmp [0] r2
-	jeq !parse_end
-	movw r2 !	
-	cmp [0] r2
-	jeq !parse_end
-	movw r2 !
-	cmp [0] r2
-	jeq !parse_end
-	mov [r1] [r0]
-	add r0 r0 !8
-	add r1 r1 !8
-unbind parse_deref
 bind parse_end ip
 unbind parse_end
 	pass_literal_bytes
