@@ -253,6 +253,77 @@ mov r0 !1
 int
 end
 
+// word definitions
+pass
+movw 0 !:
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_whitespace
+	pass_literal_bytes
+pass
+movw 0
+	pass_literal_bytes
+	mov r2 !\!
+	mov [r1] r2
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	pass_literal_bytes
+mov 8 r1
+bind word_loop ip
+cmp r0 0
+jne !word_next
+	pass_literal_bytes
+	movw [r1] !pass_literal_content
+	add r1 r1 !8
+	pass_literal_bytes
+bind word_inner ip
+mov r2 !;
+cmp [r0] r2
+jne !word_inner_next
+add r0 r0 !8
+jmp word_loop
+bind word_inner_next ip
+mov [r1] [r0]
+add r0 r0 !8
+add r1 r1 !8
+cmp r0 8
+jne !word_inner
+unbind word_inner
+	pass_literal_bytes
+	movw [r1] !pass_literal_content
+	add r1 r1 !8
+	pass_literal_bytes
+add r0 r0 !8
+jmp !word_loop
+bind word_next ip
+mov [r1] [r0]
+add r0 r0 !8
+add r1 r1 !8
+cmp r0 8
+jne !word_loop
+unbind word_loop
+unbind word_next
+mov r0 !1
+int
+end
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop 
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind break ip
+mov r0 !1
+int
+end
+
 // stack push operation
 pass
 movw 0 !psh
@@ -442,6 +513,8 @@ mov r0 !1
 int
 end
 
+//TODO pass_literal_post
+
 // standard pass
 // pass
 // mov 8 r1
@@ -466,6 +539,8 @@ dup
 swp
 rot
 nip
+
+:quad dup dup;
 
 bind loop ip
 jmp loop
