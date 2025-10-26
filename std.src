@@ -40,12 +40,17 @@ bind loop ip
 	bind change ip
 		cmp [r0] 0
 		jeq !break
-		movw [r1] !mov add r1 r1 !8
-		movw [r1] !\[  add r1 r1 !8
-		movw [r1] !r1  add r1 r1 !8
-		movw [r1] !\]  add r1 r1 !8
-		movw [r1] !\!  add r1 r1 !8
-		mov  [r1] [r0] add r1 r1 !8
+		movw [r1] !movw add r1 r1 !8
+		movw [r1] !\[   add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !\]   add r1 r1 !8
+		movw [r1] !\!   add r1 r1 !8
+		mov  [r1] [r0]  add r1 r1 !8
+		movw [r1] !add  add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !\!   add r1 r1 !8
+		mov  [r1] !8    add r1 r1 !8
 		add r0 r0 !8
 		jmp !change
 	bind break ip
@@ -81,6 +86,8 @@ bind loop ip
 	run
 	bind sp 0
 	bind fp 8
+	mov sp !sp
+	mov fp sp
 	pass_literal_bytes
 	add r0 r0 !8
 	jmp !loop
@@ -154,9 +161,6 @@ end
 pass
 movw 0 !pass_whitespace
 mov 8 r1
-movw 10 ! // space
-movw 18 !	// tag
-movw 20 !
 // newline
 bind loop ip
 	cmp [r0] 0
@@ -165,19 +169,19 @@ bind loop ip
 	bind pass_loop ip
 		cmp [r0]
 	pass_literal_bytes
-		mov [r1] 10
+		movw [r1] ! 
+		add r1 r1 !8 
+	pass_literal_bytes
+		jeq !pass_skip
+		cmp [r0]
+	pass_literal_bytes
+		movw [r1] !	
 		add r1 r1 !8
 	pass_literal_bytes
 		jeq !pass_skip
 		cmp [r0]
 	pass_literal_bytes
-		mov [r1] 18
-		add r1 r1 !8
-	pass_literal_bytes
-		jeq !pass_skip
-		cmp [r0]
-	pass_literal_bytes
-		mov [r1] 20
+		movw [r1] !
 		add r1 r1 !8
 	pass_literal_bytes
 		jeq !pass_skip
@@ -210,7 +214,6 @@ bind loop ip
 	cmp [r0] 0
 	jne !next
 	add r0 r0 !8
-	pass_whitespace
 	pass_literal_bytes
 	sub sp sp !8
 	mov [sp]
@@ -241,6 +244,9 @@ end
 // test
 stack_init
 core_register_init
+
+mov r0 !4
+psh r0
 
 bind loop ip
 jmp loop
