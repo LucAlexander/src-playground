@@ -722,6 +722,41 @@ mov r0 !1
 int
 end
 
+// copy value semantics 
+pass
+movw 0 !&
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jge !next
+	pass_literal_content
+sub tmp fp
+	pass_literal_content
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r1 r1 !8
+	add r0 r0 !8
+	pass_literal_content
+psh tmp
+	pass_literal_content
+	cmp r0 8
+	jge !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // standard pass
 // pass
 // mov 8 r1
@@ -758,6 +793,7 @@ bind main ip
 		var x = nat 6;
 		var y = (sum nat 7 nat 8);
 		r0 <- (sum $x $y)
+		r1 <- (sum &x &y)
 		jmp !loop
 	frame_stack_pop
 
