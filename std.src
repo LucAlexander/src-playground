@@ -82,6 +82,9 @@ comp
 	sub 0 r1 !8
 	sub 8 0 !8
 	sub 10 8 !8
+	bind fsp !200
+	mov fsp !200
+	mov [fsp] !0
 	mov r0 !1
 	int
 run
@@ -266,6 +269,11 @@ bind loop ip
 	jne !next
 	add r0 r0 !8
 	pass_literal_bytes
+comp
+	add [fsp] [fsp] !8
+	mov r0 !1
+	int
+run
 sub sp sp !8
 mov [sp]
 	pass_literal_bytes
@@ -288,6 +296,11 @@ bind loop ip
 	jne !next
 	add r0 r0 !8
 	pass_literal_bytes
+comp
+	sub [fsp] [fsp] !8
+	mov r0 !1
+	int
+run
 mov 
 	pass_literal_bytes
 	pass_whitespace
@@ -460,6 +473,11 @@ bind loop ip
 	add r0 r0 !8
 	pass_whitespace
 	pass_literal_content
+comp
+	add [fsp] [fsp] !8
+	mov r0 !1
+	int
+run
 sub sp sp !8
 movw [sp] !current
 psh fp
@@ -556,6 +574,114 @@ int
 end
 
 // standard pass
+pass
+movw 0 !var
+movw 10 !=
+movw 18 !;
+mov 8 r1
+bind loop ip
+	mov 28 r0
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 !8
+	jge !exit
+	pass_whitespace
+	mov 20 [r0]
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	pass_whitespace
+	cmp [r0] 10
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	bind inner ip
+		cmp [r0] 18
+		jeq !break
+		mov [r1] [r0]
+		add r0 r0 !8
+		add r1 r1 !8
+		cmp r0 8
+		jge !exit
+		jmp !inner
+	bind break ip
+	pass_literal_bytes
+bind
+	pass_literal_bytes
+	mov [r1] 20
+	add r1 r1 !8
+pass_literal_bytes
+[fsp]
+pass_literal_bytes
+	bind next ip
+	mov r0 28
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
+// frame_stack_pop
+pass
+movw 0 !frame_stack_pop
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_bytes
+comp
+	sub fsp fsp !8
+	mov r0 !1
+	int
+run
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop 
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
+
+// frame_stack_push
+pass
+movw 0 !frame_stack_push
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	pass_literal_bytes
+comp
+	add fsp fsp !8
+	mov [fsp] !0
+	mov r0 !1
+	int
+run
+	pass_literal_bytes
+	add r0 r0 !8
+	jmp !loop 
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+mov r0 !1
+int
+end
+
+
+// standard pass
 // pass
 // mov 8 r1
 // bind loop ip
@@ -576,15 +702,19 @@ mov r0 !1
 int 
 
 bind sum ip
+	frame_stack_push
 	add r1 fp !10
 	add r2 fp !18
 	mov r1 [r1]
 	mov r2 [r2]
 	add r3 r1 r2
 	ret r3
+	//frame_stack_pop
 
 bind main ip
+	//frame_stack_push
 	bind loop ip
 		r0 <- (sum nat 4 nat 5)
 		jmp loop
+	//frame_stack_pop
 
