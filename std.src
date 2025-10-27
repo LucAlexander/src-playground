@@ -81,11 +81,13 @@ comp
 	mov r1 !mtp
 	sub 0 r1 !8
 	sub 8 0 !8
+	sub 10 8 !8
 	mov r0 !1
 	int
 run
 bind sp 0
 bind fp 8
+bind tmp 10
 mov sp !sp
 mov fp sp
 	pass_literal_bytes
@@ -342,6 +344,45 @@ mov r0 !1
 int
 end
 
+// stack procedure call with arguments
+pass
+movw 0 !(
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	mov 10 [r0]
+	add r0 r0 !8
+	movw r2 !)
+	bind until_close ip
+		cmp [r0] r2
+		jeq !close
+		mov [r1] [r0]
+		add r0 r0 !8
+		add r1 r1 !8
+		cmp r0 8
+		jeq !exit
+		jmp !until_close
+	bind close ip
+	add r0 r0 !8
+	movw [r1] !call
+	add r1 r1 !8
+	mov [r1] 10
+	add r1 r1 !8
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // stack procedure call
 pass
 movw 0 !call
@@ -393,14 +434,14 @@ bind loop ip
 	pass_literal_content
 mov sp fp
 pop fp
-mov r3 [sp]
+mov tmp [sp]
 mov [sp]
 	pass_literal_content
 	mov [r1] [r0]
 	add r0 r0 !8
 	add r1 r1 !8
 	pass_literal_content
-jmp r3
+jmp tmp
 	pass_literal_content
 	cmp r0 8
 	jne !loop
@@ -432,17 +473,23 @@ end
 // test
 stack_init
 core_register_init
-call main
+(main)
 mov r0 !1
 int 
 
 bind sum ip
-	psh r0
-	pop r1
-	ret r1
+	add r1 fp !10
+	add r2 fp !18
+	mov r1 [r1]
+	mov r2 [r2]
+	add r3 r1 r2
+	ret r3
 
 bind main ip
 	bind loop ip
-		call sum
+		mov r0 !4
+		mov r1 !5
+		(sum psh r0 psh r1)
+		pop r0
 		jmp loop
 
