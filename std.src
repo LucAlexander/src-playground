@@ -84,7 +84,7 @@ comp
 	sub 10 8 !8
 	bind fsp !200
 	mov fsp !208
-	mov [fsp] !8
+	mov [fsp] !0
 	mov r0 !1
 	int
 run
@@ -490,6 +490,7 @@ jmp
 	add r0 r0 !8
 	add r1 r1 !8
 	pass_literal_content
+pop tmp
 bind current ip
 unbind current
 	pass_literal_content
@@ -518,7 +519,8 @@ bind loop ip
 	pass_whitespace
 	pass_literal_content
 mov sp fp
-pop fp
+mov fp [sp]
+add sp sp !8
 mov tmp [sp]
 mov [sp]
 	pass_literal_content
@@ -658,7 +660,6 @@ mov r0 !1
 int
 end
 
-
 // frame_stack_push
 pass
 movw 0 !frame_stack_push
@@ -669,7 +670,7 @@ bind loop ip
 	pass_literal_bytes
 comp
 	add fsp fsp !8
-	mov [fsp] !8
+	mov [fsp] !0
 	mov r0 !1
 	int
 run
@@ -686,6 +687,40 @@ mov r0 !1
 int
 end
 
+// copy value semantics 
+pass
+movw 0 !$
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jge !next
+	pass_literal_content
+sub tmp fp
+	pass_literal_content
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r1 r1 !8
+	add r0 r0 !8
+	pass_literal_content
+psh [tmp]
+	pass_literal_content
+	cmp r0 8
+	jge !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
 
 // standard pass
 // pass
@@ -703,7 +738,6 @@ end
 // test
 stack_init
 core_register_init
-frame_stack_push
 (main)
 mov r0 !1
 int 
@@ -723,7 +757,7 @@ bind main ip
 	bind loop ip
 		var x = nat 6;
 		var y = (sum nat 7 nat 8);
-		r0 <- (sum nat 4 nat 5)
+		r0 <- (sum $x $y)
 		jmp !loop
 	frame_stack_pop
 
