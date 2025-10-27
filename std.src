@@ -302,6 +302,120 @@ mov r0 !1
 int
 end
 
+// byte literal blocks for passes
+pass
+movw 0 !pass_literal_content
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	bind change ip
+		cmp [r0] 0
+		jeq !break
+		movw [r1] !movw add r1 r1 !8
+		movw [r1] !\[   add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !\]   add r1 r1 !8
+		movw [r1] !\!   add r1 r1 !8
+		mov  [r1] [r0]  add r1 r1 !8
+		movw [r1] !add  add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !r1   add r1 r1 !8
+		movw [r1] !\!   add r1 r1 !8
+		mov  [r1] !8    add r1 r1 !8
+		add r0 r0 !8
+		jmp !change
+	bind break ip
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
+// stack procedure call
+pass
+movw 0 !call
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	pass_literal_content
+sub sp sp !8
+movw [sp] !current
+psh fp
+mov fp sp
+jmp
+	pass_literal_content
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	pass_literal_content
+bind current ip
+unbind current
+	pass_literal_content
+	cmp r0 8
+	jne !loop
+	jmp !exit
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
+// stack procedure return
+pass
+movw 0 !ret
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	pass_literal_content
+mov sp fp
+pop fp
+mov r3 [sp]
+mov [sp]
+	pass_literal_content
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	pass_literal_content
+jmp r3
+	pass_literal_content
+	cmp r0 8
+	jne !loop
+	jmp !exit
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // standard pass
 // pass
 // mov 8 r1
@@ -318,13 +432,17 @@ end
 // test
 stack_init
 core_register_init
-
-mov r0 !4
-psh r0
-pop r1
-
-bind loop ip
-jmp loop
-
+call main
 mov r0 !1
 int 
+
+bind sum ip
+	psh r0
+	pop r1
+	ret r1
+
+bind main ip
+	bind loop ip
+		call sum
+		jmp loop
+

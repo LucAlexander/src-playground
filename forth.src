@@ -588,6 +588,8 @@ nip
 
 :double psh !2 *;
 
+:bifib fib_step fib_step;
+
 :fib_step dup rot +;
 
 psh !2 psh !3 psh !5 birot double
@@ -595,6 +597,7 @@ pop r3
 
 psh !1
 psh !1
+bifib
 
 bind loop ip
 jmp loop
