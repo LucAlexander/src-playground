@@ -83,8 +83,8 @@ comp
 	sub 8 0 !8
 	sub 10 8 !8
 	bind fsp !200
-	mov fsp !200
-	mov [fsp] !0
+	mov fsp !208
+	mov [fsp] !8
 	mov r0 !1
 	int
 run
@@ -542,37 +542,6 @@ mov r0 !1
 int
 end
 
-// primitive u64
-pass
-movw 0 !nat
-mov 8 r1
-bind loop ip
-	cmp [r0] 0
-	jne !next
-	add r0 r0 !8
-	pass_whitespace
-	pass_literal_content
-psh
-	pass_literal_content
-	movw [r1] !\!
-	add r1 r1 !8
-	mov [r1] [r0]
-	add r0 r0 !8
-	add r1 r1 !8
-	cmp r0 8
-	jeq !exit
-	jmp !loop
-	bind next ip
-	mov [r1] [r0]
-	add r0 r0 !8
-	add r1 r1 !8
-	cmp r0 8
-	jne !loop
-bind exit ip
-mov r0 !1
-int
-end
-
 // standard pass
 pass
 movw 0 !var
@@ -584,7 +553,7 @@ bind loop ip
 	cmp [r0] 0
 	jne !next
 	add r0 r0 !8
-	cmp r0 !8
+	cmp r0 8
 	jge !exit
 	pass_whitespace
 	mov 20 [r0]
@@ -606,6 +575,7 @@ bind loop ip
 		jge !exit
 		jmp !inner
 	bind break ip
+	add r0 r0 !8
 	pass_literal_bytes
 bind
 	pass_literal_bytes
@@ -614,8 +584,44 @@ bind
 pass_literal_bytes
 [fsp]
 pass_literal_bytes
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jmp !loop
 	bind next ip
 	mov r0 28
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
+// primitive u64
+pass
+movw 0 !nat
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	pass_literal_content
+psh
+	pass_literal_content
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jeq !exit
+	jmp !loop
+	bind next ip
 	mov [r1] [r0]
 	add r0 r0 !8
 	add r1 r1 !8
@@ -663,7 +669,7 @@ bind loop ip
 	pass_literal_bytes
 comp
 	add fsp fsp !8
-	mov [fsp] !0
+	mov [fsp] !8
 	mov r0 !1
 	int
 run
@@ -697,6 +703,7 @@ end
 // test
 stack_init
 core_register_init
+frame_stack_push
 (main)
 mov r0 !1
 int 
@@ -709,12 +716,14 @@ bind sum ip
 	mov r2 [r2]
 	add r3 r1 r2
 	ret r3
-	//frame_stack_pop
+	frame_stack_pop
 
 bind main ip
-	//frame_stack_push
+	frame_stack_push
 	bind loop ip
+		var x = nat 6;
+		var y = (sum nat 7 nat 8);
 		r0 <- (sum nat 4 nat 5)
-		jmp loop
-	//frame_stack_pop
+		jmp !loop
+	frame_stack_pop
 
