@@ -181,6 +181,8 @@ jeq !pass_skip
 jmp !pass_end
 bind pass_skip ip
 add r0 r0 !8
+cmp r0 !8
+jeq !pass_end
 jmp !pass_loop
 bind pass_end ip
 unbind pass_loop
@@ -344,6 +346,71 @@ mov r0 !1
 int
 end
 
+// return retrieve from call
+pass
+movw 0 !<
+movw 10 !-
+movw 18 !(
+movw 20 !)
+mov 8 r1
+bind loop ip
+	mov 28 r0
+	add r0 r0 !8
+	pass_whitespace
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	cmp [r0] 10
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	pass_whitespace
+	cmp [r0] 18
+	jne !next	
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jge !exit
+	bind until_close ip
+		cmp [r0] 20
+		jeq !break
+		mov [r1] [r0]
+		add r0 r0 !8
+		add r1 r1 !8
+		cmp r0 8
+		jge !exit
+		jmp !until_close
+	bind break ip
+	mov [r1] [r0]
+	add r1 r1 !8
+	pass_literal_bytes
+mov
+	pass_literal_bytes
+	mov [r1] [28] //NOTE only one token, doesnt do dereferences for now
+	add r0 r0 !8
+	add r1 r1 !8
+	pass_literal_bytes
+[sp]
+add sp sp !8
+	pass_literal_bytes
+	cmp r0 8
+	jge !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [28]
+	add r0 28 !8
+	add r1 r1 !8
+	cmp r0 8
+	jlt !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // stack procedure call with arguments
 pass
 movw 0 !(
@@ -457,6 +524,37 @@ mov r0 !1
 int
 end
 
+// primitive u64
+pass
+movw 0 !nat
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	pass_literal_content
+psh
+	pass_literal_content
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jeq !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // standard pass
 // pass
 // mov 8 r1
@@ -487,9 +585,6 @@ bind sum ip
 
 bind main ip
 	bind loop ip
-		mov r0 !4
-		mov r1 !5
-		(sum psh r0 psh r1)
-		pop r0
+		r0 <- (sum nat 4 nat 5)
 		jmp loop
 
