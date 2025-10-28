@@ -877,6 +877,10 @@ term main =
 		var y = (sum nat 7 nat 8);
 		r0 <- (sum $x $y)
 		r1 <- (sum &x &y)
+		sub r2 fp !x
+		mov r2 [r2]
+		sub r3 fp !y
+		mov r3 [r3]
 		jmp !loop
 	ret 0
 ;
