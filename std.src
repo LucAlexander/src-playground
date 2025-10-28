@@ -634,6 +634,91 @@ mov r0 !1
 int
 end
 
+// terms
+pass
+movw 0 !term
+movw 10 !=
+movw 18 !;
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	pass_literal_content
+comp
+	mov 0 !8
+	mov r0 !1
+	int
+run
+bind arg_offset !0
+bind
+	pass_literal_content
+	pass_whitespace
+	mov [r1] [r0]
+	add r1 r1 !8
+	add r0 r0 !8
+	pass_literal_content
+ip
+frame_stack_push
+	pass_literal_content
+	bind inner ip
+		pass_whitespace
+		cmp [r0] 10
+		jeq !break
+		pass_literal_content
+comp
+	add 0 0 !8
+	mov r0 !1
+	int
+run
+bind
+		pass_literal_content
+		mov [r1] [r0]
+		add r1 r1 !8
+		pass_literal_content
+arg_offset
+		pass_literal_content
+		add r0 r0 !8
+		cmp r0 8
+		jge !exit
+		jmp !inner
+	bind break ip
+	pass_literal_bytes
+unbind arg_offset
+	pass_literal_bytes
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	unbind break
+	bind block ip
+		cmp [r0] 18
+		jeq !break
+		mov [r1] [r0]
+		add r1 r1 !8
+		add r0 r0 !8
+		cmp r0 8
+		jge !exit
+		jmp !block
+	bind break ip
+	movw [r1] !frame_stack_pop
+	add r1 r1 !8
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // frame_stack_pop
 pass
 movw 0 !frame_stack_pop
@@ -777,23 +862,22 @@ core_register_init
 mov r0 !1
 int 
 
-bind sum ip
-	frame_stack_push
-	add r1 fp !10
-	add r2 fp !18
+term sum left right =
+	add r1 fp !left
+	add r2 fp !right
 	mov r1 [r1]
 	mov r2 [r2]
 	add r3 r1 r2
 	ret r3
-	frame_stack_pop
+;
 
-bind main ip
-	frame_stack_push
+term main =
 	bind loop ip
 		var x = nat 6;
 		var y = (sum nat 7 nat 8);
 		r0 <- (sum $x $y)
 		r1 <- (sum &x &y)
 		jmp !loop
-	frame_stack_pop
+	ret 0
+;
 
