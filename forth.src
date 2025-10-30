@@ -531,7 +531,7 @@ movw [r1]
 add r1 r1 !8
 		pass_literal_bytes
 		cmp [r0] r2
-		jne semi
+		jne !semi
 	add r0 r0 !8
 	pass_literal_bytes
 add r0 r0 !8
@@ -543,6 +543,7 @@ add r1 r1 !8
 cmp r0 8
 jne !word_loop
 unbind word_loop
+unbind word_next
 unbind word_next
 mov r0 !1
 int

@@ -544,7 +544,7 @@ mov r0 !1
 int
 end
 
-// standard pass
+// variant semantics
 pass
 movw 0 !var
 movw 10 !=
@@ -843,6 +843,90 @@ int
 end
 
 // standard pass
+pass
+movw 0 !struct
+movw 10 !=
+movw 18 !;
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	pass_whitespace
+	mov 20 [r0]
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	pass_whitespace
+	cmp [r0] 10
+	jne !next
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	pass_literal_bytes
+pass
+movw 0 
+	pass_literal_bytes
+	movw [r1] !\!
+	add r1 r1 !8
+	mov [r1] 20
+	add r1 r1 !8
+	add r0 r0 !8
+	pass_literal_bytes
+mov 8 r1
+bind struct_loop ip
+cmp [r0] 0
+jne !struct_next
+add r0 r0 !8
+cmp r0 8
+jeq !struct_exit
+	pass_literal_bytes
+	bind semi ip
+		pass_literal_bytes
+movw [r1]
+		pass_literal_bytes
+		movw [r1] !\!
+		add r1 r1 !8
+		mov [r1] [r0]
+		add r0 r0 !8
+		add r1 r1 !8
+		pass_literal_bytes
+add r1 r1 !8
+		pass_literal_bytes
+		cmp [r0] 18
+		jne !semi
+	add r0 r0 !8
+	pass_literal_bytes
+add r0 r0 !8
+jmp !struct_loop
+bind struct_next ip
+mov [r1] [r0]
+add r0 r0 !8
+add r1 r1 !8
+cmp r0 8
+jne !struct_loop
+bind struct_exit ip
+unbind struct_next
+unbind struct_exit
+unbind struct_loop
+mov r0 !1
+int
+end
+	pass_literal_bytes
+	bind next ip	
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
+// standard pass
 // pass
 // mov 8 r1
 // bind loop ip
@@ -862,12 +946,15 @@ core_register_init
 mov r0 !1
 int 
 
+struct pair = 
+	nat 0
+	nat 0
+;
+
 term sum left right =
 	add r1 fp !left
 	add r2 fp !right
-	mov r1 [r1]
-	mov r2 [r2]
-	add r3 r1 r2
+	add r3 [r1] [r2]
 	ret r3
 ;
 
@@ -881,6 +968,7 @@ term main =
 		mov r2 [r2]
 		sub r3 fp !y
 		mov r3 [r3]
+		var p = pair;
 		jmp !loop
 	ret 0
 ;
