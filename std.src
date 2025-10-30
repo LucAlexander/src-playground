@@ -969,6 +969,10 @@ term main =
 		sub r3 fp !y
 		mov r3 [r3]
 		var p = pair;
+		mov [sp] r2
+		add sp sp !8
+		mov [sp] r3
+		sub sp sp !8
 		jmp !loop
 	ret 0
 ;
