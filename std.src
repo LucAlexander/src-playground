@@ -603,6 +603,42 @@ mov r0 !1
 int
 end
 
+// primitive buffer
+pass
+movw 0 !buffer
+mov 8 r1
+bind loop ip
+	cmp [r0] 0
+	jne !next
+	add r0 r0 !8
+	pass_whitespace
+	mov 18 [r0]
+	add r0 r0 !8
+	cmp r0 8
+	jeq !exit
+	pass_whitespace
+	mov 10 [r0]
+	bind buffer_loop ip
+		mov [r1] 10
+		add r1 r1 !8
+		sub 18 18 !1
+		cmp 18 !0
+		jgt !buffer_loop
+	add r0 r0 !8
+	cmp r0 8
+	jge !exit
+	jmp !loop
+	bind next ip
+	mov [r1] [r0]
+	add r0 r0 !8
+	add r1 r1 !8
+	cmp r0 8
+	jne !loop
+bind exit ip
+mov r0 !1
+int
+end
+
 // primitive u64
 pass
 movw 0 !nat
@@ -964,15 +1000,21 @@ term main =
 		var y = (sum nat 7 nat 8);
 		r0 <- (sum $x $y)
 		r1 <- (sum &x &y)
+
 		sub r2 fp !x
 		mov r2 [r2]
 		sub r3 fp !y
 		mov r3 [r3]
+
 		var p = pair;
 		mov [sp] r2
 		add sp sp !8
 		mov [sp] r3
 		sub sp sp !8
+		
+		var coords = buffer 6 pair;
+		var array = buffer 5 nat 7;
+
 		jmp !loop
 	ret 0
 ;
