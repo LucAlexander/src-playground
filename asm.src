@@ -576,14 +576,12 @@ end
 stack_init
 core_register_init
 
-mov r0 !4
-dup
-dup
-dup
-pop r1
-swp
-rot
-nip
+:main
+	bind loop ip
+	jmp !loop
+	mov r0 !1
+	int
+;
 
 :birot rot rot;
 
@@ -593,15 +591,4 @@ nip
 
 :fib_step dup rot +;
 
-psh !2 psh !3 psh !5 birot double
-pop r3
-
-psh !1
-psh !1
-bifib
-
-bind loop ip
-jmp !loop
-
-mov r0 !1
-int 
+main

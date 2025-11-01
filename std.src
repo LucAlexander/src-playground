@@ -994,6 +994,41 @@ term sum left right =
 	ret r3
 ;
 
+term + left right =
+	add r1 fp !left
+	add r2 fp !right
+	add r3 [r1] [r2]
+	ret r3
+;
+
+term - left right =
+	add r1 fp !left
+	add r2 fp !right
+	sub r3 [r1] [r2]
+	ret r3
+;
+
+term * left right =
+	add r1 fp !left
+	add r2 fp !right
+	mul r3 [r1] [r2]
+	ret r3
+;
+
+term / left right =
+	add r1 fp !left
+	add r2 fp !right
+	div r3 [r1] [r2]
+	ret r3
+;
+
+term % left right =
+	add r1 fp !left
+	add r2 fp !right
+	mod r3 [r1] [r2]
+	ret r3
+;
+
 term main =
 	bind loop ip
 		var x = nat 6;
@@ -1013,7 +1048,7 @@ term main =
 		sub sp sp !8
 		
 		var coords = buffer 6 pair;
-		var array = buffer 5 nat 7;
+		var array = buffer 5 nat 0;
 
 		jmp !loop
 	ret 0
